@@ -74,3 +74,26 @@ def esgf_search(server="https://esgf-node.llnl.gov/esg-search/search",
                 if sp[-1] == files_type:
                     all_files.append(sp[0].split(".html")[0])
     return sorted(all_files)
+
+
+
+def calc_Bering_fluxes(DS):
+    # Model reference density [kg/m3]
+    rho_0 = 1035
+    # Reference potential temperature for heat flux [deg C]
+    theta_ref = -1.9
+    # Heat capacity of water for model output [J/kg K]
+    C_p = 3992
+    # Reference salinity for freshwater flux [PSU]
+    S_ref = 34.8
+    
+    # Volume transport [m3/s]
+    DS['T_vol'] = DS.vmo/rho_0
+    
+    # Heat flux [J/s]
+    DS['F_heat'] = rho_0 * DS.T_vol * C_p * (DS.thetao - theta_ref)
+    
+    # Freshwater flux [km3/s]
+    DS['F_fresh'] = DS.T_vol * (1 - (DS.so/S_ref)) * (10**-9)
+
+    return DS
