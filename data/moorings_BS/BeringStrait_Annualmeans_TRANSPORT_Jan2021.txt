@@ -1,0 +1,74 @@
+%** ================================================================= ** 
+%**          BERING STRAIT ANNUAL MEANS - TRANSPORT                   **
+%** ================================================================= ** 
+%** Processed Jan2021 from transalla3 and v4 etc **
+%**   Contact: Rebecca Woodgate (woodgate@uw.edu) (206)-221-3268
+%**   Background: http://psc.apl.washington.edu/BeringStrait.html
+%**                                                            
+%** If you use these data, especially for publications, please:
+%**    a) Email me with the publication reference
+%**    b) Cite the data, viz:
+%**                                                            
+%** CITATIONS:  
+%** 1) Woodgate R.A., K.Stafford, F.Prahl, 2015, 
+%** A Synthesis of Year-round Interdisciplinary Mooring Measurements  
+%** in the Bering Strait (1990-2014) and the RUSALCA years (2004-2011), 
+%** Oceanography 28(3):46-67, doi:10.5670/oceanog.2015.57 
+%** 2) Woodgate, R.A., 2018                                
+%** Increases in the Pacific inflow to the Arctic from 1990 to 2015, and 
+%** insights into seasonal trends and driving mechanisms from year-round 
+%** Bering Strait mooring data
+%** Progress in Oceanography
+%** 3) Woodgate, R.A., and C.Peralta-Ferriz, 2021 submitted
+%** Warming and Freshening of the Pacific Inflow to the Arctic from 1990-2019
+%** implying dramatic shoaling in Pacific Winter Water ventilation of the
+%** Arctic water column, submitted to Geophysical Research Letters
+%** 4) Woodgate, R.A.,2020
+%** Freshening of the Pacific inflow to the Arctic, ASOF conference      
+%** 28th Sept 2020, https://asof.awi.de/outputs/island-2020 
+%**                                                            
+%** See those references for methods and data isses                      
+%**                                                            
+%** ================================================================= ** 
+%** ===== ANNUAL (CALENDAR YEAR) MEAN Transport (Sv)================= ** 
+%** ===== WITHOUT CORRECTION FOR ACC ================================ ** 
+%** ================================================================= ** 
+%** est = estimate of total annual mean transport (no ACC correction)    
+%** err = error in that mean                                             
+%** Mooring data used denoted by A2,A3,A3v4                              
+%** v4 = with corrections for instrument depth and data dropouts         
+%** NaN = insufficient data to compute annual mean                       
+%** -------------------------------------------------------------------- 
+%** --- For our best estimate of the total flow through the strait       
+%**(excluding the ~0.1Sv of the ACC), use A3estv4 (with error A3estv4err)
+%** -------------------------------------------------------------------- 
+% YEAR  A2est  A2err   YEAR  A3est  A3err  A3estv4 A3estv4err
+  1991   0.79   0.12   1991   0.88   0.13   0.95   0.14
+  1992   0.75   0.06   1992    NaN    NaN    NaN    NaN
+  1993   0.79   0.11   1993    NaN    NaN    NaN    NaN
+  1994   0.98   0.32   1994    NaN    NaN    NaN    NaN
+  1995   0.88   0.06   1995    NaN    NaN    NaN    NaN
+  1996    NaN    NaN   1996    NaN    NaN    NaN    NaN
+  1997    NaN    NaN   1997    NaN    NaN    NaN    NaN
+  1998   0.81   0.10   1998   0.88   0.11   0.98   0.13
+  1999   0.80   0.09   1999    NaN    NaN    NaN    NaN
+  2000   0.75   0.08   2000   0.68   0.09   0.81   0.09
+  2001   0.62   0.08   2001   0.62   0.08   0.68   0.08
+  2002   0.73   0.09   2002   0.82   0.10   0.90   0.11
+  2003   0.72   0.09   2003   0.89   0.10   0.97   0.11
+  2004   0.85   0.11   2004   0.97   0.12   1.06   0.13
+  2005   0.75   0.14   2005   0.72   0.15   0.79   0.16
+  2006   0.85   0.11   2006   0.83   0.11   0.91   0.12
+  2007   1.10   0.13   2007   1.06   0.10   1.12   0.11
+  2008   0.90   0.09   2008   0.91   0.10   0.91   0.10
+  2009   0.90   0.12   2009   0.95   0.12   0.95   0.12
+  2010   0.98   0.10   2010   1.03   0.11   1.03   0.11
+  2011   1.00   0.11   2011   1.08   0.11   1.08   0.11
+  2012   0.73   0.11   2012   0.77   0.12   0.77   0.12
+  2013   1.02   0.08   2013   1.07   0.08   1.06   0.08
+  2014   1.09   0.12   2014   1.19   0.14   1.18   0.14
+  2015   0.97   0.10   2015   1.10   0.10   1.09   0.10
+  2016   0.91   0.12   2016   1.04   0.12   1.03   0.12
+  2017   1.05   0.14   2017   1.15   0.15   1.14   0.14
+  2018   0.97   0.12   2018   1.07   0.12   1.06   0.12
+  2019    NaN    NaN   2019    NaN    NaN    NaN    NaN
