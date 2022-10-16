@@ -1,0 +1,70 @@
+%** ================================================================= ** 
+%**          BERING STRAIT ANNUAL MEANS - SALINITY                   **
+%** ================================================================= ** 
+%** Processed Jan2021 from saltalla3 and corr_v2 etc **
+%**   Contact: Rebecca Woodgate (woodgate@apl.washington.edu) (206)-221-3268
+%**   Background: http://psc.apl.washington.edu/BeringStrait.html
+%**                                                            
+%** If you use these data, especially for publications, please:
+%**    a) Email me with the publication reference
+%**    b) Cite the data, viz:
+%**                                                            
+%** CITATIONS:  
+%** 1) Woodgate R.A., K.Stafford, F.Prahl, 2015, 
+%** A Synthesis of Year-round Interdisciplinary Mooring Measurements  
+%** in the Bering Strait (1990-2014) and the RUSALCA years (2004-2011), 
+%** Oceanography 28(3):46-67, doi:10.5670/oceanog.2015.57 
+%** 2) Woodgate, R.A., 2018                                 
+%** Increases in the Pacific inflow to the Arctic from 1990 to 2015, and 
+%** insights into seasonal trends and driving mechanisms from year-round 
+%** Bering Strait mooring data
+%** Progress in Oceanography
+%** 3) Woodgate, R.A., and C.Peralta-Ferriz, 2021 submitted
+%** Warming and Freshening of the Pacific Inflow to the Arctic from 1990-2019
+%** implying dramatic shoaling in Pacific Winter Water ventilation of the
+%** Arctic water column, submitted to Geophysical Research Letters
+%** 4) Woodgate, R.A.,2020
+%** Freshening of the Pacific inflow to the Arctic, ASOF conference      
+%** 28th Sept 2020, https://asof.awi.de/outputs/island-2020 
+%**                                                            
+%** See those references for methods and data isses                      
+%**                                                            
+%** ================================================================= ** 
+%** ===== ANNUAL (CALENDAR YEAR) MEAN SALINITIES (PSU)=============== ** 
+%** ================================================================= ** 
+%** Sal = Annual mean near-bottom salinity at site    
+%** err = error in that mean                                             
+%** Mooring data used denoted by A1, A2, A3, A4                          
+%** c2 = with corrections for biofoulings (see Woodgate, 2017)           
+%** NaN = insufficient data to compute annual mean                       
+%** ----------------------------                                         
+%  YEAR  A1Sal A1Serr    YEAR  A2Sal A2Serr    YEAR  A4Sal A4Serr    YEAR  A3Sal A3Serr A3c2Sal A3c2Serr  
+   1991    NaN    NaN    1991  32.58   0.35    1991    NaN    NaN    1991  32.81   0.28  32.81   0.28 
+   1992    NaN    NaN    1992    NaN    NaN    1992    NaN    NaN    1992    NaN    NaN    NaN    NaN 
+   1993  32.48   0.19    1993    NaN    NaN    1993    NaN    NaN    1993    NaN    NaN    NaN    NaN 
+   1994    NaN    NaN    1994  32.23   0.26    1994    NaN    NaN    1994    NaN    NaN    NaN    NaN 
+   1995    NaN    NaN    1995  32.33   0.21    1995    NaN    NaN    1995    NaN    NaN    NaN    NaN 
+   1996    NaN    NaN    1996    NaN    NaN    1996    NaN    NaN    1996    NaN    NaN    NaN    NaN 
+   1997    NaN    NaN    1997    NaN    NaN    1997    NaN    NaN    1997    NaN    NaN    NaN    NaN 
+   1998    NaN    NaN    1998  31.92   0.21    1998    NaN    NaN    1998  32.26   0.15  32.26   0.15 
+   1999    NaN    NaN    1999  32.60   0.20    1999    NaN    NaN    1999  32.72   0.12  32.72   0.12 
+   2000    NaN    NaN    2000  32.27   0.38    2000    NaN    NaN    2000  32.49   0.32  32.49   0.32 
+   2001    NaN    NaN    2001  32.32   0.18    2001    NaN    NaN    2001  32.40   0.15  32.41   0.15 
+   2002    NaN    NaN    2002  32.35   0.24    2002  31.79   0.43    2002  32.54   0.21  32.54   0.21 
+   2003    NaN    NaN    2003    NaN    NaN    2003  31.73   0.20    2003  32.24   0.17  32.24   0.17 
+   2004    NaN    NaN    2004    NaN    NaN    2004  31.50   0.33    2004  32.42   0.16  32.42   0.16 
+   2005  32.52   0.25    2005  32.18   0.26    2005  31.63   0.29    2005  32.41   0.16  32.41   0.16 
+   2006  32.71   0.17    2006  32.35   0.20    2006    NaN    NaN    2006  32.52   0.09  32.53   0.09 
+   2007  32.82   0.10    2007  32.20   0.32    2007    NaN    NaN    2007  32.62   0.10  32.62   0.10 
+   2008  32.82   0.11    2008  32.30   0.22    2008  32.20   0.25    2008  32.65   0.12  32.65   0.12 
+   2009  32.55   0.23    2009  32.31   0.15    2009  31.93   0.35    2009  32.52   0.15  32.52   0.15 
+   2010  32.58   0.11    2010  32.29   0.21    2010  31.98   0.52    2010  32.41   0.06  32.41   0.06 
+   2011  32.59   0.12    2011  32.29   0.17    2011  31.61   0.32    2011  32.40   0.11  32.40   0.11 
+   2012    NaN    NaN    2012  32.56   0.24    2012    NaN    NaN    2012  32.46   0.22  32.50   0.21 
+   2013    NaN    NaN    2013  32.04   0.28    2013    NaN    NaN    2013  32.22   0.10  32.35   0.11 
+   2014    NaN    NaN    2014  32.17   0.11    2014  31.63   0.20    2014  32.22   0.10  32.39   0.08 
+   2015    NaN    NaN    2015  32.13   0.13    2015  31.53   0.14    2015  32.24   0.13  32.36   0.11 
+   2016    NaN    NaN    2016  31.76   0.19    2016    NaN    NaN    2016  31.96   0.21  32.01   0.22 
+   2017    NaN    NaN    2017  32.16   0.18    2017    NaN    NaN    2017  32.25   0.20  32.28   0.19 
+   2018    NaN    NaN    2018    NaN    NaN    2018  31.13   0.14    2018  32.19   0.16  32.24   0.16 
+   2019    NaN    NaN    2019    NaN    NaN    2019    NaN    NaN    2019    NaN    NaN    NaN    NaN 
