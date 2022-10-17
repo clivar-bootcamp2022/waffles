@@ -9,6 +9,7 @@ import socket
 import requests
 import xml.etree.ElementTree as ET
 import numpy
+from xmip.preprocessing import combined_preprocessing
 
 def is_ncar_host():
     """Determine if host is an NCAR machine."""
@@ -75,8 +76,6 @@ def esgf_search(server="https://esgf-node.llnl.gov/esg-search/search",
                     all_files.append(sp[0].split(".html")[0])
     return sorted(all_files)
 
-
-
 def calc_Bering_fluxes(DS):
     # Model reference density [kg/m3]
     rho_0 = 1035
@@ -98,93 +97,20 @@ def calc_Bering_fluxes(DS):
 
     return DS
 
-
-def xmip_preproc(ds_i) : 
-
-    #Sort out coords with xmip
-    ds_i = xmip.rename_cmip6(ds_i)
-    ds_i = xmip.promote_empty_dims(ds_i)
-    ds_i = xmip.broadcast_lonlat(ds_i)
-    ds_i = xmip.correct_lon(ds_i)
-    ds_i = xmip.replace_x_y_nominal_lat_lon(ds_i)
-    ds_i = xmip.correct_coordinates(ds_i)
-    ds_i = xmip.parse_lon_lat_bounds(ds_i)
-    ds_i = xmip.maybe_convert_bounds_to_vertex(ds_i)
-    ds_i = xmip.maybe_convert_vertex_to_bounds(ds_i)
-
-    return(ds_i)
-
-
-
-def load_ds_from_esgf_file_in_model_fnames_dict(model, model_fnames_dict) : 
+def load_ds_from_esgf_file_in_model_fnames_dict(model, model_fnames_dict, flg_onefile=False) : 
     
     ## Generate filename from model_fnames_dict
     fnames_i = model_fnames_dict[model]
+    
+    # Only open a single file
+    if flg_onefile:
+        fnames_i = [fnames_i[0]]
 
     # Open filenames
-    ds_i = xr.open_mfdataset(fnames_i, combine='by_coords', compat='override', preprocess=xmip_preproc)
-
-    ##Sort out coords with xmip
-    #ds_i = xmip.rename_cmip6(ds_i)
-    #ds_i = xmip.promote_empty_dims(ds_i)
-    #ds_i = xmip.broadcast_lonlat(ds_i)
-    #ds_i = xmip.correct_lon(ds_i)
-    #ds_i = xmip.replace_x_y_nominal_lat_lon(ds_i)
-    #ds_i = xmip.correct_coordinates(ds_i)
-    #ds_i = xmip.parse_lon_lat_bounds(ds_i)
-    #ds_i = xmip.maybe_convert_bounds_to_vertex(ds_i)
-    #ds_i = xmip.maybe_convert_vertex_to_bounds(ds_i)
-    
-    
-    ##Make lat and lon coords not vars
-    #ds_i = ds_i.assign_coords({'lon':ds_i.lon, 'lat':ds_i.lat})
-    
-    ##Sort by lon 
-    #ds_i = ds_i.sortby('lon')
+    ds_i = xr.open_mfdataset(fnames_i, combine='by_coords', compat='override', preprocess=combined_preprocessing)
 
     ## Subset by >50N
     cond_i = (ds_i['lat']>=50)
     dsnow = ds_i.where(cond_i,drop=True) #[[var_i]]
     
-    
     return(dsnow)
-
-
-
-
-
-def load_1file_ds_from_esgf_file_in_model_fnames_dict(model, model_fnames_dict) : 
-    
-    ## Generate filename from model_fnames_dict
-    fnames_i = model_fnames_dict[model]
-    
-    fnames_i_2d = [fnames_i[0]]
-
-    # Open filenames
-    ds_i = xr.open_mfdataset(fnames_i_2d, combine='by_coords', compat='override', preprocess=xmip_preproc)
-
-    ##Sort out coords with xmip
-    #ds_i = xmip.rename_cmip6(ds_i)
-    #ds_i = xmip.promote_empty_dims(ds_i)
-    #ds_i = xmip.broadcast_lonlat(ds_i)
-    #ds_i = xmip.correct_lon(ds_i)
-    #ds_i = xmip.replace_x_y_nominal_lat_lon(ds_i)
-    #ds_i = xmip.correct_coordinates(ds_i)
-    #ds_i = xmip.parse_lon_lat_bounds(ds_i)
-    #ds_i = xmip.maybe_convert_bounds_to_vertex(ds_i)
-    #ds_i = xmip.maybe_convert_vertex_to_bounds(ds_i)
-    
-    
-    ##Make lat and lon coords not vars
-    #ds_i = ds_i.assign_coords({'lon':ds_i.lon, 'lat':ds_i.lat})
-    
-    ##Sort by lon 
-    #ds_i = ds_i.sortby('lon')
-
-    ## Subset by >50N
-    cond_i = (ds_i['lat']>=50)
-    dsnow = ds_i.where(cond_i,drop=True) #[[var_i]]
-    
-    
-    return(dsnow)
-
