@@ -110,8 +110,9 @@ def load_ds_from_esgf_file_in_model_fnames_dict(model, model_fnames_dict, flg_on
 
     # Open filenames
     ds_i = xr.open_mfdataset(fnames_i, combine='by_coords', compat='override', preprocess=combined_preprocessing)
-
+    
     ## Subset by >50N
+    # plan to remove this eventually
     cond_i = (ds_i['lat']>=50)
     dsnow = ds_i.where(cond_i,drop=True) #[[var_i]]
     
