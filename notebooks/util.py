@@ -8,8 +8,10 @@ import re
 import socket
 import requests
 import xml.etree.ElementTree as ET
-import numpy
-import xmip
+import numpy as np
+import pandas as pd
+import xarray as xr
+import xmip.preprocessing as xmip
 
 def is_ncar_host():
     """Determine if host is an NCAR machine."""
@@ -103,15 +105,15 @@ def calc_Bering_fluxes(DS):
 def xmip_preproc(ds_i) : 
     
     #Sort out coords with xmip
-    ds_i = xmip.preprocessing.rename_cmip6(ds_i)
-    ds_i = xmip.preprocessing.promote_empty_dims(ds_i)
-    ds_i = xmip.preprocessing.broadcast_lonlat(ds_i)
-    ds_i = xmip.preprocessing.correct_lon(ds_i)
-    ds_i = xmip.preprocessing.replace_x_y_nominal_lat_lon(ds_i)
-    ds_i = xmip.preprocessing.correct_coordinates(ds_i)
-    ds_i = xmip.preprocessing.parse_lon_lat_bounds(ds_i)
-    ds_i = xmip.preprocessing.maybe_convert_bounds_to_vertex(ds_i)
-    ds_i = xmip.preprocessing.maybe_convert_vertex_to_bounds(ds_i)
+    ds_i = xmip.rename_cmip6(ds_i)
+    ds_i = xmip.promote_empty_dims(ds_i)
+    ds_i = xmip.broadcast_lonlat(ds_i)
+    ds_i = xmip.correct_lon(ds_i)
+    ds_i = xmip.replace_x_y_nominal_lat_lon(ds_i)
+    ds_i = xmip.correct_coordinates(ds_i)
+    ds_i = xmip.parse_lon_lat_bounds(ds_i)
+    ds_i = xmip.maybe_convert_bounds_to_vertex(ds_i)
+    ds_i = xmip.maybe_convert_vertex_to_bounds(ds_i)
 
     return(ds_i)
 
