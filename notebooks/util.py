@@ -9,6 +9,7 @@ import socket
 import requests
 import xml.etree.ElementTree as ET
 import numpy
+import xmip
 
 def is_ncar_host():
     """Determine if host is an NCAR machine."""
