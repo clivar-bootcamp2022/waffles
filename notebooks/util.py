@@ -100,7 +100,7 @@ def calc_Bering_fluxes(DS):
 
     return DS
 
-def load_ds_from_esgf_file_in_model_fnames_dict(model, model_fnames_dict, flg_onefile=False) :    
+def load_ds_from_esgf_file_in_model_fnames_dict(model, model_fnames_dict, flg_onefile=False):    
     ## Generate filename from model_fnames_dict
     fnames_i = model_fnames_dict[model]
     
@@ -118,3 +118,37 @@ def load_ds_from_esgf_file_in_model_fnames_dict(model, model_fnames_dict, flg_on
     dsnow = ds_i.where(cond_i,drop=True) #[[var_i]]
     
     return(dsnow)
+
+def reindex_lat(ds):
+    # check if lat is decreasing
+    if ds.lat.isel(x=0,y=0) > 0:
+        ds = ds.reindex(y=list(reversed(ds.y))).assign_coords(y=ds.y)
+    
+    return ds
+
+
+def model_preproc(ds):
+    # fix naming
+    ds = xmip.rename_cmip6(ds)
+    # reindex y if lat is decreasing
+    ds = reindex_lat(ds)
+    # promote empty dims to actual coordinates
+    ds = xmip.promote_empty_dims(ds)
+    # demote coordinates from data_variables
+    ds = xmip.correct_coordinates(ds)
+    # broadcast lon/lat
+    ds = xmip.broadcast_lonlat(ds)
+    # shift all lons to consistent 0-360
+    ds = xmip.correct_lon(ds)
+    # fix the units
+    ds = xmip.correct_units(ds)
+    # rename the `bounds` according to their style (bound or vertex)
+    ds = xmip.parse_lon_lat_bounds(ds)
+    # sort verticies in a consistent manner
+    ds = xmip.sort_vertex_order(ds)
+    # convert vertex into bounds and vice versa, so both are available
+    ds = xmip.maybe_convert_bounds_to_vertex(ds)
+    ds = xmip.maybe_convert_vertex_to_bounds(ds)
+    ds = xmip.fix_metadata(ds)
+    ds = ds.drop_vars(["bnds", "vertex"], errors="ignore")
+    return ds
