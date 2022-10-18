@@ -120,7 +120,6 @@ def load_ds_from_esgf_file_in_model_fnames_dict(model, model_fnames_dict, flg_on
     # Open filenames
     with dask.config.set(**{'array.slicing.split_large_chunks': True}):
         ds = xr.open_mfdataset(fnames_i, combine='by_coords',compat='override').persist()
-    # ds = xr.open_mfdataset(fnames_i, compat='override').persist()
     
     # pre-process
     ds = model_preproc(ds)
