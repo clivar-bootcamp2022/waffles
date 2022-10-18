@@ -110,6 +110,7 @@ def load_ds_from_esgf_file_in_model_fnames_dict(model, model_fnames_dict, flg_on
 
     # Open filenames
     ds_i = xr.open_mfdataset(fnames_i, combine='by_coords', compat='override', preprocess=combined_preprocessing)
+    ds_i = ds_i.persist()
     
     ## Subset by >50N
     # plan to remove this eventually
