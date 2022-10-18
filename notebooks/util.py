@@ -120,13 +120,17 @@ def load_ds_from_esgf_file_in_model_fnames_dict(model, model_fnames_dict, flg_on
         fnames_i = [fnames_i[0]]
 
     # Open filenames
-    ds_i = xr.open_mfdataset(fnames_i, combine='by_coords', compat='override', preprocess=model_preproc)
-    ds_i = ds_i.persist()
+    ds = xr.open_mfdataset(fnames_i, compat='override').persist()
     
-    ## Subset by >50N
-    # plan to remove this eventually
-    cond_i = (ds_i['lat']>=50)
-    dsnow = ds_i.where(cond_i,drop=True) #[[var_i]]
+    # pre-process
+    ds = model_preproc(ds)
+    
+    # Subset by >50N
+    cond = (ds['lat']>=50)
+    dsnow = ds.where(cond,drop=True).persist()
+    
+    # rechunk
+    dsnow = dsnow.chunk(chunks={'time':-1,'lev':-1,'x':150,'y':150}).persist()
     
     return(dsnow)
 
