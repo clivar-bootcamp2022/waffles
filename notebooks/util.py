@@ -12,7 +12,6 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import xmip.preprocessing as xmip
-from xmip.preprocessing import combined_preprocessing
 
 def is_ncar_host():
     """Determine if host is an NCAR machine."""
@@ -79,53 +78,12 @@ def esgf_search(server="https://esgf-node.llnl.gov/esg-search/search",
                     all_files.append(sp[0].split(".html")[0])
     return sorted(all_files)
 
-def calc_Bering_fluxes(DS):
-    # Model reference density [kg/m3]
-    rho_0 = 1035
-    # Reference potential temperature for heat flux [deg C]
-    theta_ref = -1.9
-    # Heat capacity of water for model output [J/kg K]
-    C_p = 3992
-    # Reference salinity for freshwater flux [PSU]
-    S_ref = 34.8
-    
-    # Volume transport [m3/s]
-    DS['T_vol'] = DS.vmo/rho_0
-    
-    # Heat flux [J/s]
-    DS['F_heat'] = rho_0 * DS.T_vol * C_p * (DS.thetao - theta_ref)
-    
-    # Freshwater flux [km3/s]
-    DS['F_fresh'] = DS.T_vol * (1 - (DS.so/S_ref)) * (10**-9)
-
-    return DS
-
-def load_ds_from_esgf_file_in_model_fnames_dict(model, model_fnames_dict, flg_onefile=False):    
-    ## Generate filename from model_fnames_dict
-    fnames_i = model_fnames_dict[model]
-    
-    # Only open a single file
-    if flg_onefile:
-        fnames_i = [fnames_i[0]]
-
-    # Open filenames
-    ds_i = xr.open_mfdataset(fnames_i, combine='by_coords', compat='override', preprocess=combined_preprocessing)
-    ds_i = ds_i.persist()
-    
-    ## Subset by >50N
-    # plan to remove this eventually
-    cond_i = (ds_i['lat']>=50)
-    dsnow = ds_i.where(cond_i,drop=True) #[[var_i]]
-    
-    return(dsnow)
-
 def reindex_lat(ds):
     # check if lat is decreasing
     if ds.lat.isel(x=0,y=0) > 0:
         ds = ds.reindex(y=list(reversed(ds.y))).assign_coords(y=ds.y)
     
     return ds
-
 
 def model_preproc(ds):
     # fix naming
@@ -152,3 +110,43 @@ def model_preproc(ds):
     ds = xmip.fix_metadata(ds)
     ds = ds.drop_vars(["bnds", "vertex"], errors="ignore")
     return ds
+
+def load_ds_from_esgf_file_in_model_fnames_dict(model, model_fnames_dict, flg_onefile=False):    
+    ## Generate filename from model_fnames_dict
+    fnames_i = model_fnames_dict[model]
+    
+    # Only open a single file
+    if flg_onefile:
+        fnames_i = [fnames_i[0]]
+
+    # Open filenames
+    ds_i = xr.open_mfdataset(fnames_i, combine='by_coords', compat='override', preprocess=model_preproc)
+    ds_i = ds_i.persist()
+    
+    ## Subset by >50N
+    # plan to remove this eventually
+    cond_i = (ds_i['lat']>=50)
+    dsnow = ds_i.where(cond_i,drop=True) #[[var_i]]
+    
+    return(dsnow)
+
+def calc_Bering_fluxes(DS):
+    # Model reference density [kg/m3]
+    rho_0 = 1035
+    # Reference potential temperature for heat flux [deg C]
+    theta_ref = -1.9
+    # Heat capacity of water for model output [J/kg K]
+    C_p = 3992
+    # Reference salinity for freshwater flux [PSU]
+    S_ref = 34.8
+    
+    # Volume transport [m3/s]
+    DS['T_vol'] = DS.vmo/rho_0
+    
+    # Heat flux [J/s]
+    DS['F_heat'] = rho_0 * DS.T_vol * C_p * (DS.thetao - theta_ref)
+    
+    # Freshwater flux [km3/s]
+    DS['F_fresh'] = DS.T_vol * (1 - (DS.so/S_ref)) * (10**-9)
+
+    return DS
