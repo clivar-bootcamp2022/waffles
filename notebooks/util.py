@@ -7,9 +7,7 @@ from __future__ import print_function
 import re
 import socket
 import requests
-import xml.etree.ElementTree as ET
-import numpy as np
-import pandas as pd
+import dask
 import xarray as xr
 import xmip.preprocessing as xmip
 
@@ -120,7 +118,9 @@ def load_ds_from_esgf_file_in_model_fnames_dict(model, model_fnames_dict, flg_on
         fnames_i = [fnames_i[0]]
 
     # Open filenames
-    ds = xr.open_mfdataset(fnames_i, compat='override').persist()
+    with dask.config.set(**{'array.slicing.split_large_chunks': True}):
+        ds = xr.open_mfdataset(fnames_i, combine='by_coords',compat='override').persist()
+    # ds = xr.open_mfdataset(fnames_i, compat='override').persist()
     
     # pre-process
     ds = model_preproc(ds)
@@ -130,7 +130,7 @@ def load_ds_from_esgf_file_in_model_fnames_dict(model, model_fnames_dict, flg_on
     dsnow = ds.where(cond,drop=True).persist()
     
     # rechunk
-    dsnow = dsnow.chunk(chunks={'time':-1,'lev':-1,'x':150,'y':150}).persist()
+    dsnow = dsnow.chunk(chunks={'time':-1,'lev':-1,'x':50,'y':50}).persist()
     
     return(dsnow)
 
