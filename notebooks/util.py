@@ -157,7 +157,6 @@ def calc_Bering_fluxes(DS):
     return DS
 
 
-<<<<<<< HEAD
 def calc_dpe(DS,H=500,norm=2):
     '''
     Calculates \Delta PE, as in Muilwijk et al (2022) [https://eartharxiv.org/repository/view/3361/]
@@ -203,8 +202,6 @@ def calc_dpe(DS,H=500,norm=2):
 
 
 
-=======
->>>>>>> parent of a88085c (merge util)
 
 def subset_model_by_lat_ind(dsnow, dsnow_gt_bs_lat_i) : 
     #Calc all min and max x and y indexes
