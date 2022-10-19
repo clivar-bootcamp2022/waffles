@@ -157,51 +157,6 @@ def calc_Bering_fluxes(DS):
     return DS
 
 
-def calc_dpe(DS,H=500,norm=2):
-    '''
-    Calculates \Delta PE, as in Muilwijk et al (2022) [https://eartharxiv.org/repository/view/3361/]
-    from the surface to the target depth H, but normalizes with D**norm, where D is the maximum of 
-    H and the ocean depth.
-    
-    NOTE: Assumes positive z-coordinate, increasing downward
-    '''
-    g = 9.81 # gravitational acceleration
-    
-    # select upper H meter (H should be below halocline for all models, > 300m
-    DS = DS.sel(lev=slice(0,H))
-    print('Lowest level: '+str(DS.lev_bounds.isel(bnds=1).values[-1]))
-    # calculate potential density
-    DS['rho'] = xr.apply_ufunc(gsw.sigma0,DS.so,DS.thetao,dask='parallelized')
-
-    # calculate ds for integration and weighted mean
-    DS['dz'] = (('lev'), DS.lev_bounds.isel(bnds=1).values - DS.lev_bounds.isel(bnds=0).values)
-
-    #DS['levv'] = ((DS.rho*0 +1)*DS.lev_bounds.isel(bnds=1)).max(dim='lev')
-    DS['levv'] = xr.apply_ufunc(np.minimum,DS['deptho'],
-                                DS['lev_bounds'].sel(bnds=-1),dask='parallelized').isel(lev=-1)
-     
-    if norm == 0:
-        factor = 1
-    elif norm == 1:
-        factor = DS.levv
-    elif norm == 2:
-        factor = DS.levv**2
-        
-    # calculate tempeterature, salinity and density of a fully mixed water column
-    DS['T_mix']   = DS.thetao*0 + DS.thetao.weighted(weights=DS.dz).mean(dim='lev')
-    DS['S_mix']   = DS.so*0 + DS.so.weighted(weights=DS.dz).mean(dim='lev')
-    DS['rho_mix'] = xr.apply_ufunc(gsw.sigma0,DS.S_mix,DS.T_mix,dask='parallelized') 
-
-    # calculate DPE according to Muiwijk et al. (2022)
-    DS['pe']     = g * (DS.rho*    DS.lev).weighted(weights=DS.dz).sum(dim='lev') 
-    DS['pe_mix'] = g * (DS.rho_mix*DS.lev).weighted(weights=DS.dz).sum(dim='lev') 
-    DS['dpe']    = (DS.pe - DS.pe_mix ) / factor
-    
-    # return the DataSet and the actual H-value in that model
-    return DS,int(np.round(DS.lev_bounds.isel(bnds=1).values[-1]))
-
-
-
 
 def subset_model_by_lat_ind(dsnow, dsnow_gt_bs_lat_i) : 
     #Calc all min and max x and y indexes
@@ -226,10 +181,12 @@ def subset_model_by_lat_ind(dsnow, dsnow_gt_bs_lat_i) :
         #Test if y1 or y2 corresponds to min lat
         if np.nanmin(dsnow_gt_bs_lat_i.lat.sel(y=yind1).values) <= np.nanmin(dsnow_gt_bs_lat_i.lat.sel(y=yind2).values) : 
             dsnow_bs_lat_i_ind = dsnow.sel(y=yind1) #dsnow_gt_bs_lat_i.sel(y=yind1)
+            ilower = yind1
 
         else : 
             print("y2 > y1")
             dsnow_bs_lat_i_ind = dsnow.sel(y=yind2) #dsnow_gt_bs_lat_i.sel(y=yind2)
+            ilower = yind2
 
 
     elif (y1_ind_diff > x1_ind_diff) & (y2_ind_diff > x2_ind_diff)  : 
@@ -239,17 +196,20 @@ def subset_model_by_lat_ind(dsnow, dsnow_gt_bs_lat_i) :
         #Test if y1 or y2 corresponds to min lat
         if np.nanmin(dsnow_gt_bs_lat_i.lat.sel(x=xind1).values) < np.nanmin(dsnow_gt_bs_lat_i.lat.sel(x=xind2).values) : 
             dsnow_bs_lat_i_ind = dsnow.sel(x=xind1) #dsnow_gt_bs_lat_i.sel(x=xind1)
+            ilower = xind1
 
         else : 
             print("y2 > y1")
             dsnow_bs_lat_i_ind = dsnow.sel(x=xind2) #dsnow_gt_bs_lat_i.sel(x=xind2)
+            ilower = xind2
 
     else : 
         print("Something weird is going on - check what is happening. x1_ind_diff is : "+str(x1_ind_diff)+", x2_ind_diff is : "+str(x2_ind_diff)+"y1_ind_diff is : "+str(y1_ind_diff)+", y2_ind_diff is : "+str(y2_ind_diff))
         dsnow_bs_lat_i_ind = []
+        ilower = []
         
         
-    return(dsnow_bs_lat_i_ind)
+    return(dsnow_bs_lat_i_ind, ilower)
 
 def subset_ds_bering_trans(dsnow, model_name, lat_bs_i, bering_minlon, bering_maxlon) :
     #Subset by bs 
@@ -257,7 +217,7 @@ def subset_ds_bering_trans(dsnow, model_name, lat_bs_i, bering_minlon, bering_ma
     dsnow_gt_bs_lat_i = dsnow.where(cond_bs_lat_i ,drop=True) #[[var_i]]
 
     # Subset models by lat index
-    dsnow_bs_lat_i_ind = subset_model_by_lat_ind(dsnow, dsnow_gt_bs_lat_i)
+    dsnow_bs_lat_i_ind, ilower = subset_model_by_lat_ind(dsnow, dsnow_gt_bs_lat_i)
 
     #print('I made it this far.')
 
@@ -268,14 +228,14 @@ def subset_ds_bering_trans(dsnow, model_name, lat_bs_i, bering_minlon, bering_ma
     dsnow_bs_lat_i_where0 = (dsnow_bs_lat_i_ind.deptho>0)
 
     #Find left and right indexes of straight
-    ileft = dsnow_bs_lat_i_where0.idxmax().values-1 #search from left for index of first True
+    ileft = dsnow_bs_lat_i_where0.idxmax(dim='x').values-1 #search from left for index of first True
     dsnow_bs_lat_i_where0 = dsnow_bs_lat_i_where0.sortby('x', ascending=False)
-    iright = dsnow_bs_lat_i_where0.idxmax().values+1 #search from right for index of first True        
+    iright = dsnow_bs_lat_i_where0.idxmax(dim='x').values+1 #search from right for index of first True        
     #print indexes and lon values
     print(model_name, ileft, iright, " IE ", dsnow_bs_lat_i_ind.sel(x=ileft).lon.values, "-", dsnow_bs_lat_i_ind.sel(x=iright).lon.values)
     
     dsnow_bs_lat_i_ind = dsnow_bs_lat_i_ind.sel(x=slice(ileft, iright))
     
-    return(dsnow_bs_lat_i_ind)
+    return(dsnow_bs_lat_i_ind, ilower, ileft, iright)
 
     
