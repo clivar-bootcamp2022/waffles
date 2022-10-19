@@ -221,10 +221,12 @@ def subset_model_by_lat_ind(dsnow, dsnow_gt_bs_lat_i) :
         #Test if y1 or y2 corresponds to min lat
         if np.nanmin(dsnow_gt_bs_lat_i.lat.sel(y=yind1).values) <= np.nanmin(dsnow_gt_bs_lat_i.lat.sel(y=yind2).values) : 
             dsnow_bs_lat_i_ind = dsnow.sel(y=yind1) #dsnow_gt_bs_lat_i.sel(y=yind1)
+            ilower = yind1
 
         else : 
             print("y2 > y1")
             dsnow_bs_lat_i_ind = dsnow.sel(y=yind2) #dsnow_gt_bs_lat_i.sel(y=yind2)
+            ilower = yind2
 
 
     elif (y1_ind_diff > x1_ind_diff) & (y2_ind_diff > x2_ind_diff)  : 
@@ -234,16 +236,19 @@ def subset_model_by_lat_ind(dsnow, dsnow_gt_bs_lat_i) :
         #Test if y1 or y2 corresponds to min lat
         if np.nanmin(dsnow_gt_bs_lat_i.lat.sel(x=xind1).values) < np.nanmin(dsnow_gt_bs_lat_i.lat.sel(x=xind2).values) : 
             dsnow_bs_lat_i_ind = dsnow.sel(x=xind1) #dsnow_gt_bs_lat_i.sel(x=xind1)
+            ilower = xind1
 
         else : 
             print("y2 > y1")
             dsnow_bs_lat_i_ind = dsnow.sel(x=xind2) #dsnow_gt_bs_lat_i.sel(x=xind2)
+            ilower = xind2
 
     else : 
         print("Something weird is going on - check what is happening. x1_ind_diff is : "+str(x1_ind_diff)+", x2_ind_diff is : "+str(x2_ind_diff)+"y1_ind_diff is : "+str(y1_ind_diff)+", y2_ind_diff is : "+str(y2_ind_diff))
         dsnow_bs_lat_i_ind = []
+        ilower = []
               
-    return(dsnow_bs_lat_i_ind)
+    return(dsnow_bs_lat_i_ind, ilower)
 
 def subset_ds_bering_trans(dsnow, model_name, lat_bs_i, bering_minlon, bering_maxlon) :
     #Subset by bs 
@@ -251,7 +256,7 @@ def subset_ds_bering_trans(dsnow, model_name, lat_bs_i, bering_minlon, bering_ma
     dsnow_gt_bs_lat_i = dsnow.where(cond_bs_lat_i ,drop=True) #[[var_i]]
 
     # Subset models by lat index
-    dsnow_bs_lat_i_ind = subset_model_by_lat_ind(dsnow, dsnow_gt_bs_lat_i)
+    dsnow_bs_lat_i_ind, ilower = subset_model_by_lat_ind(dsnow, dsnow_gt_bs_lat_i)
 
     #print('I made it this far.')
 
@@ -263,12 +268,12 @@ def subset_ds_bering_trans(dsnow, model_name, lat_bs_i, bering_minlon, bering_ma
     dsnow_bs_lat_i_where0 = (dsnow_bs_lat_i_ind.deptho>0)
 
     #Find left and right indexes of straight
-    ileft = dsnow_bs_lat_i_where0.idxmax().values-1 #search from left for index of first True
+    ileft = dsnow_bs_lat_i_where0.idxmax(dim='x').values-1 #search from left for index of first True
     dsnow_bs_lat_i_where0 = dsnow_bs_lat_i_where0.sortby('x', ascending=False)
-    iright = dsnow_bs_lat_i_where0.idxmax().values+1 #search from right for index of first True        
+    iright = dsnow_bs_lat_i_where0.idxmax(dim='x').values+1 #search from right for index of first True        
     #print indexes and lon values
     print(model_name, ileft, iright, " IE ", dsnow_bs_lat_i_ind.sel(x=ileft).lon.values, "-", dsnow_bs_lat_i_ind.sel(x=iright).lon.values)
     
     dsnow_bs_lat_i_ind = dsnow_bs_lat_i_ind.sel(x=slice(ileft, iright))
     
-    return(dsnow_bs_lat_i_ind)
+    return(dsnow_bs_lat_i_ind, ilower, ileft, iright)
