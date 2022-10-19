@@ -129,7 +129,12 @@ def load_ds_from_esgf_file_in_model_fnames_dict(model, model_fnames_dict, flg_on
     dsnow = ds.where(cond,drop=True) #.persist()
     
     # rechunk
-    dsnow = dsnow.chunk(chunks={'x':50,'y':50}) #.persist() #'time':-1,'lev':-1
+    if ('time' in list(dsnow.dims)) & ('lev' in list(dsnow.dims)):
+        dsnow = dsnow.chunk(chunks={'time':-1,'lev':-1,'x':50,'y':50})
+    elif 'time' in list(dsnow.dims):
+        dsnow = dsnow.chunk(chunks={'time':-1,'x':50,'y':50})
+    else:
+        dsnow = dsnow.chunk(chunks={'x':50,'y':50})
     
     return(dsnow)
 
