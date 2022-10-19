@@ -148,14 +148,25 @@ def calc_Bering_fluxes(DS):
     # Reference salinity for freshwater flux [PSU]
     S_ref = 34.8
     
+    # Calculate seconds in each time step
+    dt = (DS.time_bounds.isel(bnds=1) - 
+          DS.time_bounds.isel(bnds=0)
+         ).values.astype("timedelta64[ms]").astype(int) / 1000
+    
     # Volume transport [m3/s]
     DS['T_vol'] = DS.vmo/rho_0
     
     # Heat flux [J/s]
     DS['F_heat'] = rho_0 * DS.T_vol * C_p * (DS.thetao - theta_ref)
     
+    # Heat transport [J]
+    DS['T_heat'] = DS['F_heat'] * dt
+    
     # Freshwater flux [km3/s]
     DS['F_fresh'] = DS.T_vol * (1 - (DS.so/S_ref)) * (10**-9)
+    
+    # Freshwater transport [km3]
+    DS['T_fresh'] = DS['F_fresh'] * dt
 
     return DS
 
