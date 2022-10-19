@@ -10,6 +10,8 @@ import requests
 import dask
 import xarray as xr
 import xmip.preprocessing as xmip
+import numpy as np 
+
 
 def is_ncar_host():
     """Determine if host is an NCAR machine."""
@@ -114,22 +116,22 @@ def load_ds_from_esgf_file_in_model_fnames_dict(model, model_fnames_dict, flg_on
     fnames_i = model_fnames_dict[model]
     
     # Only open a single file
-    if flg_onefile:
+    if flg_onefile=='True':
         fnames_i = [fnames_i[0]]
 
     # Open filenames
     with dask.config.set(**{'array.slicing.split_large_chunks': True}):
-        ds = xr.open_mfdataset(fnames_i, combine='by_coords',compat='override').persist()
+        ds = xr.open_mfdataset(fnames_i, combine='by_coords',compat='override', preprocess=model_preproc) #.persist()
     
     # pre-process
-    ds = model_preproc(ds)
+    #ds = model_preproc(ds)
     
     # Subset by >50N
     cond = (ds['lat']>=50)
-    dsnow = ds.where(cond,drop=True).persist()
+    dsnow = ds.where(cond,drop=True) #.persist()
     
     # rechunk
-    dsnow = dsnow.chunk(chunks={'time':-1,'lev':-1,'x':50,'y':50}).persist()
+    #dsnow = dsnow.chunk(chunks={'x':50,'y':50}) #.persist() #'time':-1,'lev':-1
     
     return(dsnow)
 
@@ -153,3 +155,82 @@ def calc_Bering_fluxes(DS):
     DS['F_fresh'] = DS.T_vol * (1 - (DS.so/S_ref)) * (10**-9)
 
     return DS
+
+
+
+def subset_model_by_lat_ind(dsnow, dsnow_gt_bs_lat_i) : 
+    #Calc all min and max x and y indexes
+    yind1 = dsnow_gt_bs_lat_i.lat.isel(y=0).y.values
+    yind2 = dsnow_gt_bs_lat_i.lat.isel(y=-1).y.values
+    xind1 = dsnow_gt_bs_lat_i.lat.isel(x=0).x.values
+    xind2 = dsnow_gt_bs_lat_i.lat.isel(x=-1).x.values
+
+    ## Determine if x or y index corresponds to lat and if min or max index corresponds to lat
+
+    y1_ind_diff = np.nanmax(dsnow_gt_bs_lat_i.lat.sel(y=yind1).values)-np.nanmin(dsnow_gt_bs_lat_i.lat.sel(y=yind1).values)
+    y2_ind_diff = np.nanmax(dsnow_gt_bs_lat_i.lat.sel(y=yind2).values)-np.nanmin(dsnow_gt_bs_lat_i.lat.sel(y=yind2).values)
+
+    x1_ind_diff = np.nanmax(dsnow_gt_bs_lat_i.lat.sel(x=xind1).values)-np.nanmin(dsnow_gt_bs_lat_i.lat.sel(x=xind1).values)
+    x2_ind_diff = np.nanmax(dsnow_gt_bs_lat_i.lat.sel(x=xind2).values)-np.nanmin(dsnow_gt_bs_lat_i.lat.sel(x=xind2).values)
+
+    # First test if lat range corresponding to xind or yind max-min is bigger
+    if (y1_ind_diff < x1_ind_diff) & (y2_ind_diff < x2_ind_diff)  : 
+        # If true then y ind corresponds to determining lat 
+        # Ideally should test this for both x1 and x2 BUT should be same
+
+        #Test if y1 or y2 corresponds to min lat
+        if np.nanmin(dsnow_gt_bs_lat_i.lat.sel(y=yind1).values) <= np.nanmin(dsnow_gt_bs_lat_i.lat.sel(y=yind2).values) : 
+            dsnow_bs_lat_i_ind = dsnow.sel(y=yind1) #dsnow_gt_bs_lat_i.sel(y=yind1)
+
+        else : 
+            print("y2 > y1")
+            dsnow_bs_lat_i_ind = dsnow.sel(y=yind2) #dsnow_gt_bs_lat_i.sel(y=yind2)
+
+
+    elif (y1_ind_diff > x1_ind_diff) & (y2_ind_diff > x2_ind_diff)  : 
+        # If True then x ind corresponds to determining lat
+        print('Note : x ind seems to correspond to lat not y (as expected)!')
+
+        #Test if y1 or y2 corresponds to min lat
+        if np.nanmin(dsnow_gt_bs_lat_i.lat.sel(x=xind1).values) < np.nanmin(dsnow_gt_bs_lat_i.lat.sel(x=xind2).values) : 
+            dsnow_bs_lat_i_ind = dsnow.sel(x=xind1) #dsnow_gt_bs_lat_i.sel(x=xind1)
+
+        else : 
+            print("y2 > y1")
+            dsnow_bs_lat_i_ind = dsnow.sel(x=xind2) #dsnow_gt_bs_lat_i.sel(x=xind2)
+
+    else : 
+        print("Something weird is going on - check what is happening. x1_ind_diff is : "+str(x1_ind_diff)+", x2_ind_diff is : "+str(x2_ind_diff)+"y1_ind_diff is : "+str(y1_ind_diff)+", y2_ind_diff is : "+str(y2_ind_diff))
+        dsnow_bs_lat_i_ind = []
+        
+        
+    return(dsnow_bs_lat_i_ind)
+
+def subset_ds_bering_trans(dsnow, model_name, lat_bs_i, bering_minlon, bering_maxlon) :
+    #Subset by bs 
+    cond_bs_lat_i = (dsnow['lat']>=lat_bs_i) & (dsnow['lon']>=bering_minlon) & (dsnow['lon']<=bering_maxlon)
+    dsnow_gt_bs_lat_i = dsnow.where(cond_bs_lat_i ,drop=True) #[[var_i]]
+
+    # Subset models by lat index
+    dsnow_bs_lat_i_ind = subset_model_by_lat_ind(dsnow, dsnow_gt_bs_lat_i)
+
+    #print('I made it this far.')
+
+    ## Subselect lat by edges of land (depth=0) on either side 
+    dsnow_bs_lat_i_ind = dsnow_bs_lat_i_ind.where(dsnow_bs_lat_i_ind.lon>bering_minlon-5, drop=True).where(dsnow_bs_lat_i_ind.lon<bering_maxlon+5, drop=True)
+
+    #Mask for where deptho is 0 /nan
+    dsnow_bs_lat_i_where0 = (dsnow_bs_lat_i_ind.deptho>0)
+
+    #Find left and right indexes of straight
+    ileft = dsnow_bs_lat_i_where0.idxmax().values-1 #search from left for index of first True
+    dsnow_bs_lat_i_where0 = dsnow_bs_lat_i_where0.sortby('x', ascending=False)
+    iright = dsnow_bs_lat_i_where0.idxmax().values+1 #search from right for index of first True        
+    #print indexes and lon values
+    print(model_name, ileft, iright, " IE ", dsnow_bs_lat_i_ind.sel(x=ileft).lon.values, "-", dsnow_bs_lat_i_ind.sel(x=iright).lon.values)
+    
+    dsnow_bs_lat_i_ind = dsnow_bs_lat_i_ind.sel(x=slice(ileft, iright))
+    
+    return(dsnow_bs_lat_i_ind)
+
+    
