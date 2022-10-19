@@ -121,17 +121,15 @@ def load_ds_from_esgf_file_in_model_fnames_dict(model, model_fnames_dict, flg_on
 
     # Open filenames
     with dask.config.set(**{'array.slicing.split_large_chunks': True}):
-        ds = xr.open_mfdataset(fnames_i, combine='by_coords',compat='override', preprocess=model_preproc) #.persist()
-    
-    # pre-process
-    #ds = model_preproc(ds)
+        ds = xr.open_mfdataset(fnames_i, combine='by_coords',
+                               compat='override', preprocess=model_preproc) #.persist()
     
     # Subset by >50N
     cond = (ds['lat']>=50)
     dsnow = ds.where(cond,drop=True) #.persist()
     
     # rechunk
-    #dsnow = dsnow.chunk(chunks={'x':50,'y':50}) #.persist() #'time':-1,'lev':-1
+    dsnow = dsnow.chunk(chunks={'x':50,'y':50}) #.persist() #'time':-1,'lev':-1
     
     return(dsnow)
 
@@ -200,9 +198,6 @@ def calc_dpe(DS,H=500,norm=2):
     # return the DataSet and the actual H-value in that model
     return DS,int(np.round(DS.lev_bounds.isel(bnds=1).values[-1]))
 
-
-
-
 def subset_model_by_lat_ind(dsnow, dsnow_gt_bs_lat_i) : 
     #Calc all min and max x and y indexes
     yind1 = dsnow_gt_bs_lat_i.lat.isel(y=0).y.values
@@ -247,8 +242,7 @@ def subset_model_by_lat_ind(dsnow, dsnow_gt_bs_lat_i) :
     else : 
         print("Something weird is going on - check what is happening. x1_ind_diff is : "+str(x1_ind_diff)+", x2_ind_diff is : "+str(x2_ind_diff)+"y1_ind_diff is : "+str(y1_ind_diff)+", y2_ind_diff is : "+str(y2_ind_diff))
         dsnow_bs_lat_i_ind = []
-        
-        
+              
     return(dsnow_bs_lat_i_ind)
 
 def subset_ds_bering_trans(dsnow, model_name, lat_bs_i, bering_minlon, bering_maxlon) :
@@ -262,7 +256,8 @@ def subset_ds_bering_trans(dsnow, model_name, lat_bs_i, bering_minlon, bering_ma
     #print('I made it this far.')
 
     ## Subselect lat by edges of land (depth=0) on either side 
-    dsnow_bs_lat_i_ind = dsnow_bs_lat_i_ind.where(dsnow_bs_lat_i_ind.lon>bering_minlon-5, drop=True).where(dsnow_bs_lat_i_ind.lon<bering_maxlon+5, drop=True)
+    dsnow_bs_lat_i_ind = dsnow_bs_lat_i_ind.where(dsnow_bs_lat_i_ind.lon>bering_minlon-5, 
+                                                  drop=True).where(dsnow_bs_lat_i_ind.lon<bering_maxlon+5, drop=True)
 
     #Mask for where deptho is 0 /nan
     dsnow_bs_lat_i_where0 = (dsnow_bs_lat_i_ind.deptho>0)
@@ -277,5 +272,3 @@ def subset_ds_bering_trans(dsnow, model_name, lat_bs_i, bering_minlon, bering_ma
     dsnow_bs_lat_i_ind = dsnow_bs_lat_i_ind.sel(x=slice(ileft, iright))
     
     return(dsnow_bs_lat_i_ind)
-
-    
