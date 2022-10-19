@@ -153,3 +153,46 @@ def calc_Bering_fluxes(DS):
     DS['F_fresh'] = DS.T_vol * (1 - (DS.so/S_ref)) * (10**-9)
 
     return DS
+
+def calc_dpe(DS,H=500,norm=2):
+    '''
+    Calculates \Delta PE, as in Muilwijk et al (2022) [https://eartharxiv.org/repository/view/3361/]
+    from the surface to the target depth H, but normalizes with D**norm, where D is the maximum of 
+    H and the ocean depth.
+    
+    NOTE: Assumes positive z-coordinate, increasing downward
+    '''
+    g = 9.81 # gravitational acceleration
+    
+    # select upper H meter (H should be below halocline for all models, > 300m
+    DS = DS.sel(lev=slice(0,H))
+    print('Lowest level: '+str(DS.lev_bounds.isel(bnds=1).values[-1]))
+    # calculate potential density
+    DS['rho'] = xr.apply_ufunc(gsw.sigma0,DS.so,DS.thetao,dask='parallelized')
+
+    # calculate ds for integration and weighted mean
+    DS['dz'] = (('lev'), DS.lev_bounds.isel(bnds=1).values - DS.lev_bounds.isel(bnds=0).values)
+
+    #DS['levv'] = ((DS.rho*0 +1)*DS.lev_bounds.isel(bnds=1)).max(dim='lev')
+    DS['levv'] = xr.apply_ufunc(np.minimum,DS['deptho'],
+                                DS['lev_bounds'].sel(bnds=-1),dask='parallelized').isel(lev=-1)
+     
+    if norm == 0:
+        factor = 1
+    elif norm == 1:
+        factor = DS.levv
+    elif norm == 2:
+        factor = DS.levv**2
+        
+    # calculate tempeterature, salinity and density of a fully mixed water column
+    DS['T_mix']   = DS.thetao*0 + DS.thetao.weighted(weights=DS.dz).mean(dim='lev')
+    DS['S_mix']   = DS.so*0 + DS.so.weighted(weights=DS.dz).mean(dim='lev')
+    DS['rho_mix'] = xr.apply_ufunc(gsw.sigma0,DS.S_mix,DS.T_mix,dask='parallelized') 
+
+    # calculate DPE according to Muiwijk et al. (2022)
+    DS['pe']     = g * (DS.rho*    DS.lev).weighted(weights=DS.dz).sum(dim='lev') 
+    DS['pe_mix'] = g * (DS.rho_mix*DS.lev).weighted(weights=DS.dz).sum(dim='lev') 
+    DS['dpe']    = (DS.pe - DS.pe_mix ) / factor
+    
+    # return the DataSet and the actual H-value in that model
+    return DS,int(np.round(DS.lev_bounds.isel(bnds=1).values[-1]))
