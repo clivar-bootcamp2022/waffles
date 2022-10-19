@@ -270,7 +270,7 @@ def subset_ds_bering_trans(dsnow, model_name, lat_bs_i, bering_minlon, bering_ma
     #Find left and right indexes of straight
     ileft = dsnow_bs_lat_i_where0.idxmax(dim='x').values-1 #search from left for index of first True
     dsnow_bs_lat_i_where0 = dsnow_bs_lat_i_where0.sortby('x', ascending=False)
-    iright = dsnow_bs_lat_i_where0.idxmax(dim='x').values+1 #search from right for index of first True        
+    iright = dsnow_bs_lat_i_where0.idxmax(dim='x').values+2 #search from right for index of first True        
     #print indexes and lon values
     print(model_name, ileft, iright, " IE ", dsnow_bs_lat_i_ind.sel(x=ileft).lon.values, "-", dsnow_bs_lat_i_ind.sel(x=iright).lon.values)
     
