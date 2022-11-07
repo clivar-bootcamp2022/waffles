@@ -170,6 +170,57 @@ def calc_Bering_fluxes(DS):
 
     return DS
 
+def ds_from_esgf(model, model_fnames_dict, flg_onefile=False,testing=False):    
+    ## Generate filename from model_fnames_dict
+    fnames_i = model_fnames_dict[model]
+    
+    # testing: Open a diverse, but small dataset
+    if testing:
+        fnames_i = fnames_i[0:30:6]
+        
+    # Only open a single file
+    if flg_onefile:
+        fnames_i = [fnames_i[0]]
+        
+    print(fnames_i)
+    
+    dss = {}
+    print('Going through the variables...')
+    for v in variables:
+        print(v)
+        ffs = [f for f in fnames_i if v+'_' in f]
+        if len(ffs) > 0:
+            n_files = str(len(ffs))
+            print('Opening '+n_files+' file(s)...')
+            # Open filenames
+            with dask.config.set(**{'array.slicing.split_large_chunks': True}):
+                dss[v] = xr.open_mfdataset(ffs,
+                                    preprocess=model_preproc)#,compat='override' #.persist()
+        
+        
+            #print(dss[v])
+            #print(dss[v].lat_verticies.values)
+            #dss[v]['lat_verticies_'+v] = dss[v].lat_verticies
+            #dss[v]['lon_verticies_'+v] = dss[v].lon_verticies
+        
+    # Combine datasets
+    ds = xr.merge([dss[v] for v in dss.keys()],compat='override')
+    # Subset by >50N
+    print('Subsetting...')
+    cond = (ds['lat']>=50)
+    dsnow = ds.where(cond,drop=True) #.persist()
+    
+    # rechunk
+    print('Rechunking...')
+    if ('time' in list(dsnow.dims)) & ('lev' in list(dsnow.dims)):
+        dsnow = dsnow.chunk(chunks={'time':-1,'lev':-1,'x':50,'y':50})
+    elif 'time' in list(dsnow.dims):
+        dsnow = dsnow.chunk(chunks={'time':-1,'x':50,'y':50})
+    else:
+        dsnow = dsnow.chunk(chunks={'x':50,'y':50})
+    
+    print('Done.')
+    return(dsnow)
 
 def calc_dpe(DS,H=500,norm=2):
     '''
