@@ -138,6 +138,66 @@ def load_ds_from_esgf_file_in_model_fnames_dict(model, model_fnames_dict, flg_on
     
     return(dsnow)
 
+def ds_from_esgf(model, model_fnames_dict, flg_onefile=False,testing=False,
+                variables= ['vmo','thetao','so','umo','mlotst','zos','areacello','deptho'],
+                nyear=61):    
+    ## Generate filename from model_fnames_dict
+    fnames_i = [f+'#log' for f in model_fnames_dict[model]]
+    
+    # testing: Open a diverse, but small dataset
+    if testing:
+        fnames_i = fnames_i[0:30:6]
+        
+    # Only open a single file
+    if flg_onefile:
+        fnames_i = [fnames_i[0]]
+        
+    print(fnames_i)
+    
+    dss = {}
+    print('Going through the variables...')
+    for v in variables:
+        print(v)
+        ffs = [f for f in fnames_i if v+'_' in f]
+        if len(ffs) > 0:
+            n_files = str(len(ffs))
+            print('Opening '+n_files+' file(s)...')
+            # Open filenames
+            with dask.config.set(**{'array.slicing.split_large_chunks': True}):
+                if v in ['areacello','deptho']:
+                    dss[v] = xr.open_mfdataset(ffs)#,compat='override' #.persist()
+                else:
+                    dss[v] = xr.open_mfdataset(ffs,chunks={'time': 10})#,compat='override' #.persist()
+                    
+            # select the last nyear years
+            try:
+                dss[v] = model_preproc(dss[v])
+            except:
+                print(v,' did not work to xmip...')
+                
+            if 'time' in list(dss[v].dims):
+                dss[v] = dss[v].isel(time=slice(-nyear,None))
+
+        
+    # Combine datasets
+    ds = xr.merge([dss[v] for v in dss.keys()],compat='override')
+    # Subset by >50N
+    print('Subsetting...')
+    cond = (ds['lat']>=50)
+    dsnow = ds.where(cond,drop=True) #.persist()
+    # rechunk
+    print('Rechunking...')
+
+    if ('time' in list(dsnow.dims)) & ('lev' in list(dsnow.dims)):
+        dsnow = dsnow.chunk(chunks={'time':-1,'lev':-1,'x':50,'y':50})
+    elif 'time' in list(dsnow.dims):
+        dsnow = dsnow.chunk(chunks={'time':-1,'x':50,'y':50})
+    else:
+        dsnow = dsnow.chunk(chunks={'x':50,'y':50})
+    
+    print('Done.')
+    return(dsnow)
+
 def calc_Bering_fluxes(DS):
     # Model reference density [kg/m3]
     rho_0 = 1035
